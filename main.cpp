@@ -14,6 +14,10 @@
 #define GRAVITY 0.01f
 #define SLICES 10
 
+
+int signum(float x) {
+	return (x > 0) - (x < 0);
+}
 class Sphere {
     public:
         float x;
@@ -35,14 +39,14 @@ Sphere::Sphere(float x_, float y_, float z_, float cameraX, float cameraY, float
     x = x_;
 	y = y_;
 	z = z_;
-    radius = (float)(rand() % 5 + 1);
+    radius = (float)(rand() % 10 + 2);
     radius = radius / 30.0f;
-    r = (float)(rand() % 10 + 1) / 10.0f;
-    g = (float)(rand() % 10 + 1) / 10.0f;
-    b = (float)(rand() % 10 + 1) / 10.0f;
-    xvel = (cameraX - x)/20.0f;
-    yvel = (cameraY - y)/20.0f;
-    zvel = (cameraZ - z)/20.0f;
+    r = (float)(rand() % 7 + 1) / 10.0f;
+    g = (float)(rand() % 7 + 1) / 10.0f;
+    b = (float)(rand() % 7 + 1) / 10.0f;
+    xvel = (cameraX - x)/15.0f;
+    yvel = (cameraY - y)/15.0f;
+    zvel = (cameraZ - z)/15.0f;
 }
 
 void Sphere::update() {
@@ -52,10 +56,25 @@ void Sphere::update() {
     y += yvel;
     z += zvel;
 
-    if (y - radius/2.0f < 0) {
-        y = (-y + radius/2.0f)/1.2f;
+    if (y - radius < 0) {
+        y += radius - y;
         yvel = -yvel;
     }
+	if (abs(x) + radius/2.0f > 25) {
+		xvel = -xvel;
+	}
+	if (abs(z) + radius/2.0f > 25) {
+		zvel = -zvel;
+	}
+
+
+	xvel = xvel / 1.001;
+	zvel = zvel / 1.001;
+
+	if (abs(xvel) < 0.01)
+		xvel = 0;
+	if (abs(zvel) < 0.01)
+		zvel = 0;
 }
 
 struct Vertex {
@@ -127,15 +146,83 @@ void drawFloor() {
 	for (int x = 0; x < 100; x++) {
 		for(int z = 0; z < 100; z++) {
 			glColor3f(0.8, 0.5 + 0.5/10000*x*z, 0.8);
-			Vertex v1 = Vertex(cameraPosition.x - 25 + x*0.5, 0, cameraPosition.z - 25 + z*0.5);
-			Vertex v2 = Vertex(cameraPosition.x - 25 + x*0.5, 0, cameraPosition.z - 25 + (z + 1)*0.5);
-			Vertex v3 = Vertex(cameraPosition.x - 25 + (x+1)*0.5, 0, cameraPosition.z - 25 + (1 + z)*0.5);
-			Vertex v4 = Vertex(cameraPosition.x - 25 + (x+1)*0.5, 0, cameraPosition.z - 25 + z*0.5);
+			Vertex v1 = Vertex(-25 + x*0.5, 0, -25 + z*0.5);
+			Vertex v2 = Vertex(-25 + x*0.5, 0, -25 + (z + 1)*0.5);
+			Vertex v3 = Vertex(-25 + (x+1)*0.5, 0, -25 + (1 + z)*0.5);
+			Vertex v4 = Vertex(-25 + (x+1)*0.5, 0, -25 + z*0.5);
 			drawTriangle(v1, v2, v3);
 			drawTriangle(v1, v3, v4);
 		}
 	}
 	glEnd();
+	glPushMatrix();
+	glTranslatef(0, 25, -25);
+	glRotatef(90, 1, 0, 0);
+	glBegin(GL_TRIANGLES);
+	for (int x = 0; x < 100; x++) {
+		for(int z = 0; z < 100; z++) {
+			glColor3f(0.8, 0.5 + 0.5/10000*x*z, 0.8);
+			Vertex v1 = Vertex(-25 + x*0.5, 0, -25 + z*0.5);
+			Vertex v2 = Vertex(-25 + x*0.5, 0, -25 + (z + 1)*0.5);
+			Vertex v3 = Vertex(-25 + (x+1)*0.5, 0, -25 + (1 + z)*0.5);
+			Vertex v4 = Vertex(-25 + (x+1)*0.5, 0, -25 + z*0.5);
+			drawTriangle(v1, v2, v3);
+			drawTriangle(v1, v3, v4);
+		}
+	}
+	glEnd();
+	glPopMatrix();
+	glPushMatrix();
+	glTranslatef(0, 25, 25);
+	glRotatef(-90, 1, 0, 0);
+	glBegin(GL_TRIANGLES);
+	for (int x = 0; x < 100; x++) {
+		for(int z = 0; z < 100; z++) {
+			glColor3f(0.8, 0.5 + 0.5/10000*x*z, 0.8);
+			Vertex v1 = Vertex(-25 + x*0.5, 0, -25 + z*0.5);
+			Vertex v2 = Vertex(-25 + x*0.5, 0, -25 + (z + 1)*0.5);
+			Vertex v3 = Vertex(-25 + (x+1)*0.5, 0, -25 + (1 + z)*0.5);
+			Vertex v4 = Vertex(-25 + (x+1)*0.5, 0, -25 + z*0.5);
+			drawTriangle(v1, v2, v3);
+			drawTriangle(v1, v3, v4);
+		}
+	}
+	glEnd();
+	glPopMatrix();
+	glPushMatrix();
+	glTranslatef(25, 25, 0);
+	glRotatef(90, 0, 0, 1);
+	glBegin(GL_TRIANGLES);
+	for (int x = 0; x < 100; x++) {
+		for(int z = 0; z < 100; z++) {
+			glColor3f(0.8, 0.5 + 0.5/10000*x*z, 0.8);
+			Vertex v1 = Vertex(-25 + x*0.5, 0, -25 + z*0.5);
+			Vertex v2 = Vertex(-25 + x*0.5, 0, -25 + (z + 1)*0.5);
+			Vertex v3 = Vertex(-25 + (x+1)*0.5, 0, -25 + (1 + z)*0.5);
+			Vertex v4 = Vertex(-25 + (x+1)*0.5, 0, -25 + z*0.5);
+			drawTriangle(v1, v2, v3);
+			drawTriangle(v1, v3, v4);
+		}
+	}
+	glEnd();
+	glPopMatrix();
+	glPushMatrix();
+	glTranslatef(-25, 25, 0);
+	glRotatef(-90, 0, 0, 1);
+	glBegin(GL_TRIANGLES);
+	for (int x = 0; x < 100; x++) {
+		for(int z = 0; z < 100; z++) {
+			glColor3f(0.8, 0.5 + 0.5/10000*x*z, 0.8);
+			Vertex v1 = Vertex(-25 + x*0.5, 0, -25 + z*0.5);
+			Vertex v2 = Vertex(-25 + x*0.5, 0, -25 + (z + 1)*0.5);
+			Vertex v3 = Vertex(-25 + (x+1)*0.5, 0, -25 + (1 + z)*0.5);
+			Vertex v4 = Vertex(-25 + (x+1)*0.5, 0, -25 + z*0.5);
+			drawTriangle(v1, v2, v3);
+			drawTriangle(v1, v3, v4);
+		}
+	}
+	glEnd();
+	glPopMatrix();
 }
 
 void drawSpheres() {
@@ -298,7 +385,7 @@ void update() {
 		cameraLookAt.z += fVector.z * vMoveInput + sVector.z * hMoveInput;
 	}
 
-	if (keysState['b'] && !previousKeysState['b']) {
+	if ((keysState['b'] && !previousKeysState['b']) || keysState['r']) {
 		spheres.push_back(new Sphere(cameraPosition.x, cameraPosition.y, cameraPosition.z,
 										cameraLookAt.x, cameraLookAt.y, cameraLookAt.z));
 	}
