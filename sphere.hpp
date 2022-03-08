@@ -10,7 +10,14 @@ class Sphere {
         float xvel;
         float yvel;
         float zvel;
+        bool colliding;
         Sphere() = default;
         Sphere(float x, float y, float z, float cameraX, float cameraY, float cameraZ);
-        void update();
+        virtual void update();
+};
+
+class RocketSphere : public Sphere {
+    public:
+        RocketSphere(float x, float y, float z, float cameraX, float cameraY, float cameraZ);
+        void update() override;
 };

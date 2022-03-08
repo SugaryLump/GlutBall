@@ -4,6 +4,7 @@
 #include <GL/glut.h>
 #endif
 #include "sphere.hpp"
+#include <time.h>
 
 #define _USE_MATH_DEFINES
 #define EXPLORER 0
@@ -13,11 +14,6 @@
 #define SLICES 10
 #define STACKS 10
 #define SLICES 10
-
-
-int signum(float x) {
-	return (x > 0) - (x < 0);
-}
 
 struct Vertex {
 	float x;
@@ -331,9 +327,41 @@ void update() {
 		spheres.push_back(new Sphere(cameraPosition.x, cameraPosition.y, cameraPosition.z,
 										cameraLookAt.x, cameraLookAt.y, cameraLookAt.z));
 	}
+	if ((keysState['q'] && !previousKeysState['q']) || keysState['e']) {
+		for (int s = 0; s < 5; s++) {
+			float randomAlpha = alpha + (float)(rand() % 5 + 1) / 10 - 0.3;
+			float randomBeta = beta + (float)(rand() % 5 + 1) / 10 - 0.3;
+			float randomRadius = 5 + (float)(rand() % 5 + 1) / 10 - 0.3;
+			Vertex random = fromSpherical(randomAlpha + M_PI, -randomBeta, randomRadius);
+			random.x += cameraPosition.x;
+			random.y += cameraPosition.y;
+			random.z += cameraPosition.z;
+			spheres.push_back(new Sphere(cameraPosition.x, cameraPosition.y, cameraPosition.z,
+										random.x, random.y, random.z));
+		}
+	}
 
-	for (int s = 0; s < spheres.size(); s++)
+	if ((keysState['k'] && !previousKeysState['k'])) {
+		spheres.push_back(new RocketSphere(cameraPosition.x, cameraPosition.y, cameraPosition.z,
+										cameraLookAt.x, cameraLookAt.y, cameraLookAt.z));
+	}
+
+	for (int s = 0; s < spheres.size(); s++) {
 		spheres[s]->update();
+		if (spheres[s]->colliding) {
+			spheres.erase(spheres.begin() + s);
+			for (int rs = 0; rs < 20; rs++) {
+				float randomAlpha = (float)(rand() % 314 - 157) / 100.0f;
+				float randomBeta = (float)(rand() % 212 - 106) / 100.0f;
+				Vertex random = fromSpherical(randomAlpha, randomBeta, 5);
+				random.x += spheres[s]->x;
+				random.y += spheres[s]->y;
+				random.z += spheres[s]->z;
+				spheres.push_back(new Sphere(spheres[s]->x, spheres[s]->y, spheres[s]->z,
+											random.x, random.y, random.z));
+			}
+		}
+	}
 
 	renderScene();
 	for (int i = 0; i < 256; i++) {
@@ -377,6 +405,7 @@ void passiveMouseHandler(int x, int y) {
 
 
 int main(int argc, char **argv) {
+	srand(time(NULL));
 	cameraMode = EXPLORER;
 	alpha = 0;
 	beta = 0;
