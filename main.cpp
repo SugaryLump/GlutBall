@@ -3,6 +3,7 @@
 #else
 #include <GL/glut.h>
 #endif
+#include "sphere.hpp"
 
 #define _USE_MATH_DEFINES
 #define EXPLORER 0
@@ -11,70 +12,11 @@
 #include <vector>
 #define SLICES 10
 #define STACKS 10
-#define GRAVITY 0.01f
 #define SLICES 10
 
 
 int signum(float x) {
 	return (x > 0) - (x < 0);
-}
-class Sphere {
-    public:
-        float x;
-        float y;
-        float z;
-        float radius;
-        float r;
-        float g;
-        float b;
-        float xvel;
-        float yvel;
-        float zvel;
-        Sphere() = default;
-        Sphere(float x, float y, float z, float cameraX, float cameraY, float cameraZ);
-        void update();
-};
-
-Sphere::Sphere(float x_, float y_, float z_, float cameraX, float cameraY, float cameraZ) {
-    x = x_;
-	y = y_;
-	z = z_;
-    radius = (float)(rand() % 10 + 2);
-    radius = radius / 30.0f;
-    r = (float)(rand() % 7 + 1) / 10.0f;
-    g = (float)(rand() % 7 + 1) / 10.0f;
-    b = (float)(rand() % 7 + 1) / 10.0f;
-    xvel = (cameraX - x)/15.0f;
-    yvel = (cameraY - y)/15.0f;
-    zvel = (cameraZ - z)/15.0f;
-}
-
-void Sphere::update() {
-    yvel -= GRAVITY;
-
-    x += xvel;
-    y += yvel;
-    z += zvel;
-
-    if (y - radius < 0) {
-        y += radius - y;
-        yvel = -yvel;
-    }
-	if (abs(x) + radius/2.0f > 25) {
-		xvel = -xvel;
-	}
-	if (abs(z) + radius/2.0f > 25) {
-		zvel = -zvel;
-	}
-
-
-	xvel = xvel / 1.001;
-	zvel = zvel / 1.001;
-
-	if (abs(xvel) < 0.01)
-		xvel = 0;
-	if (abs(zvel) < 0.01)
-		zvel = 0;
 }
 
 struct Vertex {
@@ -141,7 +83,7 @@ void drawTriangle(Vertex v1, Vertex v2, Vertex v3) {
 	glVertex3f(v3.x, v3.y, v3.z);
 }
 
-void drawFloor() {
+void drawRoom() {
 	glBegin(GL_TRIANGLES);
 	for (int x = 0; x < 100; x++) {
 		for(int z = 0; z < 100; z++) {
@@ -332,7 +274,7 @@ void renderScene(void) {
 		      cameraLookAt.x,cameraLookAt.y,cameraLookAt.z,
 			  0.0f,1.0f,0.0f);
 
-	drawFloor();
+	drawRoom();
 	drawSpheres();
 
 	// End of frame
