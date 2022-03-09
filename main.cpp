@@ -55,7 +55,8 @@ int timebase;
 float fps;
 std::vector<float> vs;
 std::vector<unsigned int> fs;
-GLuint vertices, indices, verticeCount, indexCount;
+GLuint vertices, indices, verticeCount;
+unsigned int indexCount;
 
 
 void normalizeAlphaBeta() {
@@ -216,7 +217,6 @@ void changeSize(int w, int h) {
 
 
 void renderScene(void) {
-
 	// clear buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -226,12 +226,8 @@ void renderScene(void) {
 		      cameraLookAt.x,cameraLookAt.y,cameraLookAt.z,
 			  0.0f,1.0f,0.0f);
 
-	//drawRoom();
-	//drawSpheres();
-	glBindBuffer(GL_ARRAY_BUFFER, vertices);
-	glVertexPointer(3, GL_FLOAT, 0,0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices);
-	glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
+	drawRoom();
+	drawSpheres();
 	// End of frame
 	glutSwapBuffers();
 }
@@ -295,7 +291,7 @@ void update() {
 		for (int s = 0; s < 5; s++) {
 			float randomAlpha = alpha + (float)(rand() % 5 + 1) / 10 - 0.3;
 			float randomBeta = beta + (float)(rand() % 5 + 1) / 10 - 0.3;
-			float randomRadius = 5 + (float)(rand() % 5 + 1) / 10 - 0.3;
+			float randomRadius = 5 + (float)(rand() % 5 + 1) / 10;
 			Vertex random = fromSpherical(randomAlpha + M_PI, -randomBeta, randomRadius);
 			random.x += cameraPosition.x;
 			random.y += cameraPosition.y;
@@ -316,9 +312,9 @@ void update() {
 		spheres[s]->update();
 		if (spheres[s]->colliding) {
 			spheres.erase(spheres.begin() + s);
-			for (int rs = 0; rs < 20; rs++) {
-				float randomAlpha = (float)(rand() % 314 - 157) / 100.0f;
-				float randomBeta = (float)(rand() % 212 - 106) / 100.0f;
+			for (int rs = 0; rs < 30; rs++) {
+				float randomAlpha = (float)(rand() % 628 - 314) / 100.0f;
+				float randomBeta = (float)(rand() % 314 - 157) / 100.0f;
 				Vertex random = fromSpherical(randomAlpha, randomBeta, 5);
 				random.x += spheres[s]->x;
 				random.y += spheres[s]->y;
@@ -328,6 +324,10 @@ void update() {
 			}
 			printSphereCount();
 		}
+	}
+
+	if (keysState['c'] && !previousKeysState['c']) {
+		spheres.clear();
 	}
 
 	if (keysState['f'] && !previousKeysState['f']) {
@@ -448,7 +448,6 @@ void prepareSphereVBO() {
 	glGenBuffers(1, &indices);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * fs.size(), fs.data(), GL_STATIC_DRAW);
-
 }
 
 int main(int argc, char **argv) {
@@ -488,11 +487,14 @@ int main(int argc, char **argv) {
 	if (glewInit() != GLEW_OK) {
 		return 0;
 	}
-	prepareSphereVBO();
 
 //  OpenGL settings
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
+	glEnableClientState(GL_VERTEX_ARRAY);
+
+// Init sphere VBO
+	prepareSphereVBO();
 	
 // enter GLUT's main cycle
 	glutMainLoop();
