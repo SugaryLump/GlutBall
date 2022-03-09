@@ -1,6 +1,7 @@
 #include "sphere.hpp"
 #include <math.h>
 #define GRAVITY 0.01f
+#define RADIUS 1
 
 int signum(float x) {
 	return (x > 0) - (x < 0);
@@ -10,8 +11,8 @@ Sphere::Sphere(float x_, float y_, float z_, float cameraX, float cameraY, float
     x = x_;
 	y = y_;
 	z = z_;
-    radius = (float)(rand() % 10 + 2);
-    radius = radius / 30.0f;
+    scale = (float)(rand() % 11 + 5);
+    scale = scale / 10.0f;
     r = (float)(rand() % 7 + 1) / 10.0f;
     g = (float)(rand() % 7 + 1) / 10.0f;
     b = (float)(rand() % 7 + 1) / 10.0f;
@@ -28,18 +29,18 @@ void Sphere::update() {
     y += yvel;
     z += zvel;
 
-    if (y - radius < 0) {
-        y += radius - y;
+    if (y - scale * RADIUS < 0) {
+        y += scale * RADIUS - y;
         yvel = -yvel;
     }
-	if (abs(x) + radius/2.0f > 25) {
-        while(abs(x) + radius/2.0f > 25) {
+	if (abs(x) + scale * RADIUS > 25) {
+        while(abs(x) + scale*RADIUS > 25) {
             x -= signum(x);
         }
 		xvel = -xvel;
 	}
-	if (abs(z) + radius/2.0f > 25) {
-        while(abs(z) + radius/2.0f > 25) {
+	if (abs(z) + scale * RADIUS > 25) {
+        while(abs(z) + scale * RADIUS > 25) {
             z -= signum(z);
         }
 		zvel = -zvel;
@@ -59,8 +60,8 @@ RocketSphere::RocketSphere(float x_, float y_, float z_, float cameraX, float ca
     x = x_;
 	y = y_;
 	z = z_;
-    radius = (float)(rand() % 10 + 2);
-    radius = radius / 10.0f;
+    scale = (float)(rand() % 11 + 5);
+    scale = scale / 5.0f;
     r = (float)(rand() % 7 + 1) / 10.0f;
     g = (float)(rand() % 7 + 1) / 10.0f;
     b = (float)(rand() % 7 + 1) / 10.0f;
@@ -75,8 +76,8 @@ void RocketSphere::update() {
     y += yvel;
     z += zvel;
 
-    if (y - radius < 0 || abs(x) + radius/2.0f > 25 ||
-         abs(z) + radius/2.0f > 25) {
+    if (y - scale * RADIUS < 0 || abs(x) + scale * RADIUS > 25 ||
+         abs(z) + scale * RADIUS > 25) {
         x -= xvel;
         y -= yvel;
         z -= zvel;

@@ -3,7 +3,7 @@ class Sphere {
         float x;
         float y;
         float z;
-        float radius;
+        float scale;
         float r;
         float g;
         float b;

@@ -1,10 +1,16 @@
 #ifdef __APPLE__
 #include <GLUT/glut.h>
+#include <GLUT/glew.h>
 #else
+#include <GL/glew.h>
 #include <GL/glut.h>
 #endif
 #include "sphere.hpp"
 #include <time.h>
+#include <iostream>
+#include <string>
+
+
 
 #define _USE_MATH_DEFINES
 #define EXPLORER 0
@@ -13,7 +19,6 @@
 #include <vector>
 #define SLICES 10
 #define STACKS 10
-#define SLICES 10
 
 struct Vertex {
 	float x;
@@ -45,6 +50,13 @@ int mouseDeltaX;
 int mouseDeltaY;
 bool pointerWarp;
 std::vector<Sphere*> spheres;
+float frames;
+int timebase;
+float fps;
+std::vector<float> vs;
+std::vector<unsigned int> fs;
+GLuint vertices, indices, verticeCount, indexCount;
+
 
 void normalizeAlphaBeta() {
 	if (alpha > 2 * M_PI) {
@@ -164,71 +176,15 @@ void drawRoom() {
 }
 
 void drawSpheres() {
+	glBindBuffer(GL_ARRAY_BUFFER, vertices);
+	glVertexPointer(3, GL_FLOAT, 0,0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices);
 	for (int s = 0; s < spheres.size(); s++) {
-		Sphere* sph = spheres[s];
-		float r = sph->radius;
 		glPushMatrix();
-		glTranslatef(sph->x, sph->y, sph->z);
-		glBegin(GL_TRIANGLES);
-		glColor3f(sph->r, sph->g, sph->b);
-
-		Vertex bottom = Vertex(0, - sph->radius, 0);
-		float alpha = 0;
-		for (int sl = 0; sl < SLICES; sl++) {
-			if (sl < SLICES - 1) {
-				Vertex v1 = fromSpherical(alpha, -M_PI_2 + M_PI / STACKS, r);
-				Vertex v2 = fromSpherical(alpha + 2 * M_PI / SLICES, -M_PI_2 + M_PI / STACKS, r);
-				drawTriangle(bottom, v2, v1);
-			}
-			else {
-				Vertex v1 = fromSpherical(alpha, -M_PI_2 + M_PI / STACKS, r);
-				Vertex v2 = fromSpherical(0, -M_PI_2 + M_PI / STACKS, r);
-				drawTriangle(bottom, v2, v1);
-			}
-			alpha += 2 * M_PI / SLICES;
-		}
-
-		Vertex top = Vertex(0, sph->radius, 0);
-		alpha = 0;
-		for (int sl = 0; sl < SLICES; sl++) {
-			if (sl < SLICES - 1) {
-				Vertex v1 = fromSpherical(alpha, M_PI_2 - M_PI / STACKS, r);
-				Vertex v2 = fromSpherical(alpha + 2 * M_PI / SLICES, M_PI_2 - M_PI / STACKS, r);
-				drawTriangle(top, v1, v2);
-			}
-			else {
-				Vertex v1 = fromSpherical(alpha, M_PI_2 - M_PI / STACKS, r);
-				Vertex v2 = fromSpherical(0, M_PI_2 - M_PI / STACKS, r);
-				drawTriangle(top, v1, v2);
-			}
-			alpha += 2 * M_PI / SLICES;
-		}
-
-		float beta = -M_PI_2 + M_PI/SLICES;
-		for (int st = 0; st < STACKS - 2; st++) {
-			alpha = 0;
-			for (int sl = 0; sl < STACKS; sl++) {
-				if (sl < SLICES - 1) {
-					Vertex v1 = fromSpherical(alpha, beta, r);
-					Vertex v2 = fromSpherical(alpha, beta + M_PI/SLICES, r);
-					Vertex v3 = fromSpherical(alpha + 2 * M_PI/SLICES, beta, r);
-					Vertex v4 = fromSpherical(alpha + 2 * M_PI/SLICES, beta + M_PI/SLICES, r);
-					drawTriangle(v2, v3, v4);
-					drawTriangle(v3, v2, v1);
-				}
-				else {
-					Vertex v1 = fromSpherical(alpha, beta, r);
-					Vertex v2 = fromSpherical(alpha, beta + M_PI/SLICES, r);
-					Vertex v3 = fromSpherical(0, beta, r);
-					Vertex v4 = fromSpherical(0, beta + M_PI/SLICES, r);
-					drawTriangle(v2, v3, v4);
-					drawTriangle(v3, v2, v1);
-				}
-				alpha += 2 * M_PI / SLICES;
-			}
-			beta += M_PI/SLICES;
-		}
-		glEnd();
+		glTranslatef(spheres[s]->x, spheres[s]->y, spheres[s]->z);
+		glScalef(spheres[s]->scale, spheres[s]->scale, spheres[s]->scale);
+		glColor3f(spheres[s]->r, spheres[s]->g, spheres[s]->b);
+		glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);		
 		glPopMatrix();
 	}
 }
@@ -270,13 +226,20 @@ void renderScene(void) {
 		      cameraLookAt.x,cameraLookAt.y,cameraLookAt.z,
 			  0.0f,1.0f,0.0f);
 
-	drawRoom();
-	drawSpheres();
-
+	//drawRoom();
+	//drawSpheres();
+	glBindBuffer(GL_ARRAY_BUFFER, vertices);
+	glVertexPointer(3, GL_FLOAT, 0,0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices);
+	glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
 	// End of frame
 	glutSwapBuffers();
 }
 
+
+void printSphereCount() {
+	std::cout << spheres.size() << "\n";
+}
 
 // write function to process keyboard events
 void update() {
@@ -326,6 +289,7 @@ void update() {
 	if ((keysState['b'] && !previousKeysState['b']) || keysState['r']) {
 		spheres.push_back(new Sphere(cameraPosition.x, cameraPosition.y, cameraPosition.z,
 										cameraLookAt.x, cameraLookAt.y, cameraLookAt.z));
+		printSphereCount();
 	}
 	if ((keysState['q'] && !previousKeysState['q']) || keysState['e']) {
 		for (int s = 0; s < 5; s++) {
@@ -339,11 +303,13 @@ void update() {
 			spheres.push_back(new Sphere(cameraPosition.x, cameraPosition.y, cameraPosition.z,
 										random.x, random.y, random.z));
 		}
+		printSphereCount();
 	}
 
 	if ((keysState['k'] && !previousKeysState['k'])) {
 		spheres.push_back(new RocketSphere(cameraPosition.x, cameraPosition.y, cameraPosition.z,
 										cameraLookAt.x, cameraLookAt.y, cameraLookAt.z));
+		printSphereCount();
 	}
 
 	for (int s = 0; s < spheres.size(); s++) {
@@ -360,8 +326,15 @@ void update() {
 				spheres.push_back(new Sphere(spheres[s]->x, spheres[s]->y, spheres[s]->z,
 											random.x, random.y, random.z));
 			}
+			printSphereCount();
 		}
 	}
+
+	if (keysState['f'] && !previousKeysState['f']) {
+		std::cout << fps << "\n";
+	}
+
+	//Finalizing
 
 	renderScene();
 	for (int i = 0; i < 256; i++) {
@@ -369,6 +342,15 @@ void update() {
 	}
 	mouseDeltaX = 0;
 	mouseDeltaY = 0;
+
+	//Framerates
+	frames++;
+	int time = glutGet(GLUT_ELAPSED_TIME);
+	if (time - timebase > 1000) {
+		fps = frames*1000.0/(time - timebase);
+		timebase = time;
+		frames = 0;
+	}
 }
 
 void keyboardPressHandler(unsigned char key, int x, int y) {
@@ -403,6 +385,71 @@ void passiveMouseHandler(int x, int y) {
 	}
 }
 
+void pushBackVertex(Vertex vertex) {
+	vs.push_back(vertex.x);
+	vs.push_back(vertex.y);
+	vs.push_back(vertex.z);
+}
+
+void pushBackFace(Vertex vertex) {
+	fs.push_back(vertex.x);
+	fs.push_back(vertex.y);
+	fs.push_back(vertex.z);
+}
+
+void prepareSphereVBO() {
+	pushBackVertex(Vertex(0, -1, 0));
+	pushBackVertex(Vertex(0, 1, 0));
+
+	for (int st = 0; st < STACKS - 1; st++) {
+		for (int sl = 0; sl < SLICES; sl++) {
+			pushBackVertex(fromSpherical(sl * 2 * M_PI / SLICES, -M_PI_2 + (st + 1) * M_PI / STACKS, 1));
+		}
+	}
+
+	//Bottom and top stacks;
+	for (int sl = 0; sl < SLICES; sl++) {
+		if (sl < SLICES - 1) {
+			pushBackFace(Vertex(0, sl + 3, sl + 2));
+			pushBackFace(Vertex(1, (STACKS - 2) * SLICES + 2 + sl, (STACKS - 2) * SLICES + 3 + sl));
+		}
+		else {
+			pushBackFace(Vertex(0, 2, sl + 2));
+			pushBackFace(Vertex(1, (STACKS - 2) * SLICES + 2 + sl, (STACKS - 2) * SLICES + 2));
+		}
+	}
+
+	//Middle stacks;
+	for (int st = 0; st < STACKS - 2; st++) {
+		for (int sl = 0; sl < SLICES; sl++) {
+			int v1,v2,v3,v4;
+			if (sl < SLICES - 1) {
+				v1 = st * SLICES + 2 + sl;
+				v2 = v1 + 1;
+				v3 = v1 + SLICES;
+				v4 = v3 + 1;
+			}
+			else {
+				v1 = st * SLICES + 2 + sl;
+				v2 = st * SLICES + 2;
+				v3 = v1 + SLICES;
+				v4 = v2 + SLICES;
+			}
+			pushBackFace(Vertex(v1, v2, v4));
+			pushBackFace(Vertex(v1, v4, v3));
+		}
+	}
+	verticeCount = vs.size()/3;
+	indexCount = fs.size();
+	glGenBuffers(1, &vertices);
+	glBindBuffer(GL_ARRAY_BUFFER, vertices);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vs.size(), vs.data(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &indices);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * fs.size(), fs.data(), GL_STATIC_DRAW);
+
+}
 
 int main(int argc, char **argv) {
 	srand(time(NULL));
@@ -412,6 +459,8 @@ int main(int argc, char **argv) {
 	cameraPosition = Vertex(0,1,5);
 	cameraLookAt = Vertex(0,1,0);
 	pointerWarp = false;
+	vertices = 0;
+	indices = 0;
 
 // init GLUT and the window
 	glutInit(&argc, argv);
@@ -420,6 +469,8 @@ int main(int argc, char **argv) {
 	glutInitWindowSize(800,800);
 	glutCreateWindow("CG@DI-UM");
 	glutSetCursor(GLUT_CURSOR_NONE);
+	timebase = glutGet(GLUT_ELAPSED_TIME);
+
 		
 // Required callback registry 
 	glutDisplayFunc(renderScene);
@@ -432,6 +483,12 @@ int main(int argc, char **argv) {
 	glutKeyboardUpFunc(keyboardReleaseHandler);
 	glutSpecialUpFunc(specialKeyboardReleaseHandler);
 	glutPassiveMotionFunc(passiveMouseHandler);
+
+// Glew init
+	if (glewInit() != GLEW_OK) {
+		return 0;
+	}
+	prepareSphereVBO();
 
 //  OpenGL settings
 	glEnable(GL_DEPTH_TEST);
